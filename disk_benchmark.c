@@ -11,6 +11,9 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 
+// Define maximum offset (1GB)
+#define MAX_OFFSET (1 << 30)
+
 // Function to get current time in microseconds
 unsigned long get_time_us() {
     struct timeval tv;
@@ -85,6 +88,11 @@ int main(int argc, char *argv[]) {
             offset = (off_t)(rand() % ((1 << 30) / io_size)) * io_size;
         }
 
+        // Ensure the offset doesn't exceed the MAX_OFFSET (1GB)
+        if (offset >= MAX_OFFSET) {
+            offset = 0;  // Reset the offset to 0 if it exceeds MAX_OFFSET
+        }
+
         // Seek to the desired offset
         if (lseek(fd, offset, SEEK_SET) == -1) {
             perror("lseek");
@@ -99,11 +107,13 @@ int main(int argc, char *argv[]) {
         }
 
         if (ret != io_size) {
-            perror("I/O operation");
+            fprintf(stderr, "I/O operation failed\n");
             exit(EXIT_FAILURE);
         }
 
         total_bytes += ret;
+
+        // Update the offset with both io_size and stride for spaced-out writes/reads
         offset += io_size + stride;
     }
 
@@ -121,7 +131,7 @@ int main(int argc, char *argv[]) {
     double throughput = total_bytes / elapsed_time_sec / (1 << 20); // MB/s
 
     printf("Total bytes %s: %zu\n", operation, total_bytes);
-    printf("Elapsed time: %.6f seconds\n", elapsed_time_sec);
+    printf("Elapsed: %.6f seconds\n", elapsed_time_sec);
     printf("Throughput: %.2f MB/s\n", throughput);
 
     // Clean up
