@@ -1,0 +1,1 @@
+Challenge data and the Jupyter notebook with example calculations is located in the challenge folder. The writeup (pdf) is updated with methodology and result tables, which is also provided in organized_results.csv.
